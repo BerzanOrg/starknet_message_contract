@@ -21,14 +21,20 @@ mod Contract {
         message: felt252,
     }
 
+    #[constructor]
+    fn constructor(ref self: ContractState, init_message: felt252) {
+        let caller_address = get_caller_address();
+        self.last_message.write(init_message);
+        self.last_sender.write(caller_address);
+    }
 
     #[external(v0)]
-    fn get(self: @ContractState) -> (felt252, ContractAddress) {
+    fn get_data(self: @ContractState) -> (felt252, ContractAddress) {
         (self.last_message.read(), self.last_sender.read())
     }
 
     #[external(v0)]
-    fn update(ref self: ContractState, new_message: felt252) {
+    fn update_message(ref self: ContractState, new_message: felt252) {
         let caller_address = get_caller_address();
         self.last_message.write(new_message);
         self.last_sender.write(caller_address);
