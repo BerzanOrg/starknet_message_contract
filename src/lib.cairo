@@ -1,28 +1,37 @@
-fn main() -> felt252 {
-    fib(16)
-}
+#[starknet::contract]
+mod Contract {
+    use core::starknet::event::EventEmitter;
+    use starknet::{get_caller_address, ContractAddress};
 
-fn fib(mut n: felt252) -> felt252 {
-    let mut a: felt252 = 0;
-    let mut b: felt252 = 1;
-    loop {
-        if n == 0 {
-            break a;
-        }
-        n = n - 1;
-        let temp = b;
-        b = a + b;
-        a = temp;
+    #[storage]
+    struct Storage {
+        last_message: felt252,
+        last_sender: ContractAddress,
     }
-}
 
-#[cfg(test)]
-mod tests {
-    use super::fib;
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        Update: Update,
+    }
 
-    #[test]
-    #[available_gas(100000)]
-    fn it_works() {
-        assert(fib(16) == 987, 'it works!');
+    #[derive(Drop, starknet::Event)]
+    struct Update {
+        sender: ContractAddress,
+        message: felt252,
+    }
+
+
+    #[external(v0)]
+    fn get(self: @ContractState) -> (felt252, ContractAddress) {
+        (self.last_message.read(), self.last_sender.read())
+    }
+
+    #[external(v0)]
+    fn update(ref self: ContractState, new_message: felt252) {
+        let caller_address = get_caller_address();
+        self.last_message.write(new_message);
+        self.last_sender.write(caller_address);
+        self.emit(Update { sender: caller_address, message: new_message })
     }
 }
